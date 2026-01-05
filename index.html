@@ -549,18 +549,40 @@
             updateStats();
         }
 
-        // Edit card price
-        function editPrice(id) {
+        // Edit card details
+        function editDetails(id) {
             const card = collection.find(c => c.id === id);
             if (!card) return;
 
-            const newPrice = prompt(`Enter new price for ${card.cardName}:`, card.price);
-            if (newPrice !== null && !isNaN(parseFloat(newPrice))) {
-                card.price = parseFloat(newPrice);
-                saveCollection();
-                renderCollection();
-                updateStats();
-            }
+            const newName = prompt(`Card Name:`, card.cardName);
+            if (newName === null) return; // User cancelled
+            
+            const newNumber = prompt(`Card Number:`, card.cardNumber);
+            if (newNumber === null) return;
+            
+            const newGrade = prompt(`Grade (e.g., PSA 10, CGC 9.5):`, card.grade);
+            if (newGrade === null) return;
+            
+            const newQuantity = prompt(`Quantity:`, card.quantity);
+            if (newQuantity === null) return;
+            
+            const newPrice = prompt(`Price:`, card.price);
+            if (newPrice === null) return;
+            
+            const newImageUrl = prompt(`Card Image URL (leave blank to remove):`, card.imageUrl || '');
+            if (newImageUrl === null) return;
+
+            // Update card with new values
+            card.cardName = newName.trim() || card.cardName;
+            card.cardNumber = newNumber.trim() || card.cardNumber;
+            card.grade = newGrade.trim() || card.grade;
+            card.quantity = parseInt(newQuantity) || card.quantity;
+            card.price = parseFloat(newPrice.replace(/,/g, '')) || card.price;
+            card.imageUrl = newImageUrl.trim();
+
+            saveCollection();
+            renderCollection();
+            updateStats();
         }
 
         // Sort collection
@@ -643,7 +665,7 @@
                     </div>
                     <div class="price-display">$${card.price.toFixed(2)}</div>
                     <div class="total-value">Total Value: $${(card.price * card.quantity).toFixed(2)}</div>
-                    <button class="delete-btn" onclick="editPrice(${card.id})">Edit Price</button>
+                    <button class="delete-btn" onclick="editDetails(${card.id})">Edit Details</button>
                     <button class="delete-btn" onclick="deleteCard(${card.id})">Delete</button>
                 </div>
             `).join('');
