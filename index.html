@@ -494,6 +494,10 @@
             <h2 class="form-title">Sort & Filter</h2>
             <div class="filter-controls">
                 <div class="form-group">
+                    <label for="searchBox">Search Cards</label>
+                    <input type="text" id="searchBox" placeholder="Search by name, number, or grade...">
+                </div>
+                <div class="form-group">
                     <label for="sortBy">Sort By</label>
                     <select id="sortBy">
                         <option value="dateAdded">Date Added (Newest)</option>
@@ -618,8 +622,8 @@
         }
 
         // Sort collection
-        function sortCollection(sortBy) {
-            const sorted = [...collection];
+        function sortCollection(sortBy, collectionToSort = collection) {
+            const sorted = [...collectionToSort];
             
             switch(sortBy) {
                 case 'priceHigh':
@@ -663,10 +667,28 @@
             const emptyState = document.getElementById('emptyState');
             
             const sortBy = document.getElementById('sortBy')?.value || 'dateAdded';
-            const sortedCollection = sortCollection(sortBy);
+            const searchQuery = document.getElementById('searchBox')?.value.toLowerCase() || '';
+            
+            // Filter by search query first
+            let filteredCollection = collection;
+            if (searchQuery) {
+                filteredCollection = collection.filter(card => 
+                    card.cardName.toLowerCase().includes(searchQuery) ||
+                    card.cardNumber.toLowerCase().includes(searchQuery) ||
+                    card.grade.toLowerCase().includes(searchQuery)
+                );
+            }
+            
+            // Then sort the filtered results
+            const sortedCollection = sortCollection(sortBy, filteredCollection);
 
             if (sortedCollection.length === 0) {
                 collectionDiv.innerHTML = '';
+                if (searchQuery) {
+                    emptyState.innerHTML = `<p>No cards found matching "${searchQuery}"</p><p style="font-size: 0.9rem; margin-top: 1rem;">Try a different search term</p>`;
+                } else {
+                    emptyState.innerHTML = 'Your collection is empty. Add your first graded card above!';
+                }
                 emptyState.style.display = 'block';
                 return;
             }
@@ -714,6 +736,11 @@
             const sortBy = document.getElementById('sortBy');
             if (sortBy) {
                 sortBy.addEventListener('change', renderCollection);
+            }
+            
+            const searchBox = document.getElementById('searchBox');
+            if (searchBox) {
+                searchBox.addEventListener('input', renderCollection);
             }
         });
 
