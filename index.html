@@ -367,6 +367,34 @@
             color: var(--dark);
         }
 
+        .lookup-btn {
+            background: rgba(70, 130, 180, 0.3);
+            border: 1px solid var(--ocean);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            color: var(--ocean);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .lookup-btn:hover {
+            background: var(--ocean);
+            color: var(--light);
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
         .loading {
             text-align: center;
             color: var(--accent);
@@ -669,6 +697,10 @@
                     </div>
                     <div class="price-display">$${card.price.toFixed(2)}</div>
                     <div class="total-value">Total Value: $${(card.price * card.quantity).toFixed(2)}</div>
+                    <div class="button-grid">
+                        <a href="https://130point.com/sales/?s=${encodeURIComponent(card.cardName + ' ' + card.cardNumber + ' ' + card.grade)}" target="_blank" class="lookup-btn">130point Lookup</a>
+                        <a href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(card.cardName + ' ' + card.cardNumber + ' ' + card.grade + ' one piece')}&LH_Sold=1&LH_Complete=1" target="_blank" class="lookup-btn">eBay Sold</a>
+                    </div>
                     <button class="delete-btn" onclick="editDetails(${card.id})">Edit Details</button>
                     <button class="delete-btn" onclick="deleteCard(${card.id})">Delete</button>
                 </div>
