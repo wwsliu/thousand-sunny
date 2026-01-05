@@ -135,9 +135,26 @@
             border: 2px solid rgba(255, 215, 0, 0.3);
             border-radius: 16px;
             padding: 2rem;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
             animation: fadeIn 0.8s ease-out 0.4s both;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-section {
+            background: linear-gradient(135deg, rgba(139, 69, 19, 0.4), rgba(101, 67, 33, 0.4));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.8s ease-out 0.5s both;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
         }
 
         .form-title {
@@ -225,6 +242,8 @@
             transition: all 0.3s ease;
             animation: cardAppear 0.5s ease-out both;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
         }
 
         @keyframes cardAppear {
@@ -236,6 +255,32 @@
             border-color: var(--primary);
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .card-image-container {
+            width: 100%;
+            height: 200px;
+            background: rgba(44, 24, 16, 0.4);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .no-image {
+            color: var(--sail);
+            opacity: 0.5;
+            font-size: 0.9rem;
+            text-align: center;
         }
 
         .card-header {
@@ -404,9 +449,31 @@
                         <label for="price">Price (USD)</label>
                         <input type="number" id="price" min="0" step="0.01" placeholder="0.00" required>
                     </div>
+                    <div class="form-group">
+                        <label for="imageUrl">Card Image URL (optional)</label>
+                        <input type="url" id="imageUrl" placeholder="https://example.com/card.jpg">
+                    </div>
                 </div>
                 <button type="submit">Add to Collection</button>
             </form>
+        </div>
+
+        <div class="filter-section">
+            <h2 class="form-title">Sort & Filter</h2>
+            <div class="filter-controls">
+                <div class="form-group">
+                    <label for="sortBy">Sort By</label>
+                    <select id="sortBy">
+                        <option value="dateAdded">Date Added (Newest)</option>
+                        <option value="priceHigh">Price (High to Low)</option>
+                        <option value="priceLow">Price (Low to High)</option>
+                        <option value="nameAZ">Name (A-Z)</option>
+                        <option value="nameZA">Name (Z-A)</option>
+                        <option value="gradeHigh">Grade (High to Low)</option>
+                        <option value="gradeLow">Grade (Low to High)</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div id="collection" class="collection-grid"></div>
@@ -452,6 +519,7 @@
             // Remove commas from price input before parsing
             const priceInput = document.getElementById('price').value.replace(/,/g, '');
             const price = parseFloat(priceInput) || 0;
+            const imageUrl = document.getElementById('imageUrl').value;
 
             const newCard = {
                 id: Date.now(),
@@ -460,6 +528,7 @@
                 grade,
                 quantity,
                 price,
+                imageUrl,
                 dateAdded: new Date().toISOString()
             };
 
@@ -494,12 +563,55 @@
             }
         }
 
+        // Sort collection
+        function sortCollection(sortBy) {
+            const sorted = [...collection];
+            
+            switch(sortBy) {
+                case 'priceHigh':
+                    sorted.sort((a, b) => b.price - a.price);
+                    break;
+                case 'priceLow':
+                    sorted.sort((a, b) => a.price - b.price);
+                    break;
+                case 'nameAZ':
+                    sorted.sort((a, b) => a.cardName.localeCompare(b.cardName));
+                    break;
+                case 'nameZA':
+                    sorted.sort((a, b) => b.cardName.localeCompare(a.cardName));
+                    break;
+                case 'gradeHigh':
+                    sorted.sort((a, b) => {
+                        const gradeA = parseFloat(a.grade.match(/[\d.]+/)[0]);
+                        const gradeB = parseFloat(b.grade.match(/[\d.]+/)[0]);
+                        return gradeB - gradeA;
+                    });
+                    break;
+                case 'gradeLow':
+                    sorted.sort((a, b) => {
+                        const gradeA = parseFloat(a.grade.match(/[\d.]+/)[0]);
+                        const gradeB = parseFloat(b.grade.match(/[\d.]+/)[0]);
+                        return gradeA - gradeB;
+                    });
+                    break;
+                case 'dateAdded':
+                default:
+                    sorted.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+                    break;
+            }
+            
+            return sorted;
+        }
+
         // Render collection
         function renderCollection() {
             const collectionDiv = document.getElementById('collection');
             const emptyState = document.getElementById('emptyState');
+            
+            const sortBy = document.getElementById('sortBy')?.value || 'dateAdded';
+            const sortedCollection = sortCollection(sortBy);
 
-            if (collection.length === 0) {
+            if (sortedCollection.length === 0) {
                 collectionDiv.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
@@ -507,8 +619,14 @@
 
             emptyState.style.display = 'none';
             
-            collectionDiv.innerHTML = collection.map((card, index) => `
+            collectionDiv.innerHTML = sortedCollection.map((card, index) => `
                 <div class="card-item" data-id="${card.id}" style="animation-delay: ${index * 0.1}s">
+                    <div class="card-image-container">
+                        ${card.imageUrl 
+                            ? `<img src="${card.imageUrl}" alt="${card.cardName}" class="card-image" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>Image failed to load</div>'">` 
+                            : '<div class="no-image">No image</div>'
+                        }
+                    </div>
                     <div class="card-header">
                         <div class="card-name">${card.cardName}</div>
                         <div class="grade-badge">${card.grade}</div>
@@ -531,6 +649,16 @@
             `).join('');
         }
 
+        // Add event listener for sort dropdown
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCollection();
+            
+            const sortBy = document.getElementById('sortBy');
+            if (sortBy) {
+                sortBy.addEventListener('change', renderCollection);
+            }
+        });
+
         // Update stats
         function updateStats() {
             const totalCards = collection.reduce((sum, card) => sum + card.quantity, 0);
@@ -542,7 +670,7 @@
         }
 
         // Initialize
-        loadCollection();
+        // loadCollection(); - moved to DOMContentLoaded event listener
     </script>
 </body>
 </html>
